@@ -1,5 +1,5 @@
 import React, { useRef, useState, useCallback } from "react";
-import produce from "immer";
+import { produce, Immutable, Draft } from "immer";
 import logo from "./logo.svg";
 import "./App.css";
 type DataArrayObject = {
@@ -12,11 +12,11 @@ type Data = {
   array: DataArray;
   uselessValue: null | string;
 };
-
+type Form = Immutable<{ name: string; userName: string }>;
 function App() {
   const nextId = useRef(1);
-
-  const [form, setForm] = useState({ name: "", userName: "" });
+  const formInit: Form = { name: "", userName: "" };
+  const [form, setForm] = useState(formInit);
   const dataInit: Data = {
     array: [],
     uselessValue: null,
@@ -26,10 +26,18 @@ function App() {
   const onChange = useCallback(
     (e) => {
       const { name, value } = e.target;
-      setForm({
-        ...form,
-        [name]: [value],
-      });
+      setForm(
+        produce(
+          form,
+          (
+            draft: Draft<{
+              [key: string]: string;
+            }>
+          ) => {
+            draft[name] = value;
+          }
+        )
+      );
     },
     [form]
   );
@@ -42,10 +50,15 @@ function App() {
         name: form.name,
         username: form.userName,
       };
-      setData({
-        ...data,
-        array: data.array.concat(info),
-      });
+      // setData({
+      //   ...data,
+      //   array: data.array.concat(info),
+      // });
+      setData(
+        produce(data, (draft) => {
+          draft.array.push(info);
+        })
+      );
       setForm({
         name: "",
         userName: "",
@@ -56,10 +69,15 @@ function App() {
   );
   const onRemove = useCallback(
     (id) => {
-      setData({
-        ...data,
-        array: data.array.filter((info) => info.id !== id),
-      });
+      setData(
+        //   {
+        //   ...data,
+        //   array: data.array.filter((info) => info.id !== id),
+        // }
+        produce(data, (draft) => {
+          draft.array.filter((info) => info.id !== id);
+        })
+      );
     },
     [data]
   );
